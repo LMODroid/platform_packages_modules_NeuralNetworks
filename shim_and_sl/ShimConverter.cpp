@@ -302,6 +302,12 @@ bool isValid(const Subgraph& subgraph) {
 
         for (size_t j = 0; j < operation.inputs.size(); ++j) {
             const uint32_t k = operation.inputs[j];
+            if (k >= operandValueKnown.size()) {
+                LOG(ERROR) << "Operation " << i << " input " << j
+                           << " operand index out of bounds: requested " << k
+                           << ", but valid index range is [0, " << operandValueKnown.size() << ")";
+                return false;
+            }
             if (!operandValueKnown[k]) {
                 LOG(ERROR) << "Operation " << i << " input " << j << " (operand " << k
                            << ") is read before it is written";
@@ -311,6 +317,12 @@ bool isValid(const Subgraph& subgraph) {
 
         for (size_t j = 0; j < operation.outputs.size(); ++j) {
             const uint32_t k = operation.outputs[j];
+            if (k >= operandValueKnown.size()) {
+                LOG(ERROR) << "Operation " << i << " output " << j
+                           << " operand index out of bounds: requested " << k
+                           << ", but valid index range is [0, " << operandValueKnown.size() << ")";
+                return false;
+            }
             // Assuming validateOperations() has not returned an error, we know that this output is
             // TEMPORARY_VARIABLE or MODEL_OUTPUT, and so the only way operandValueKnown[k] can be
             // true is if we've already seen a writer for this operand.
@@ -342,12 +354,22 @@ bool isValid(const Subgraph& subgraph) {
 
     // Validate input and output lifetime
     for (auto index : subgraph.inputIndexes) {
+        if (index >= subgraph.operands.size()) {
+            LOG(ERROR) << "Input index out of bounds: requested " << index
+                       << ", but valid index range is [0, " << subgraph.operands.size() << ")";
+            return false;
+        }
         if (subgraph.operands[index].lifetime != OperandLifeTime::SUBGRAPH_INPUT) {
             LOG(ERROR) << "Input with index" << index << " has invalid lifetime";
             return false;
         }
     }
     for (auto index : subgraph.outputIndexes) {
+        if (index >= subgraph.operands.size()) {
+            LOG(ERROR) << "Output index out of bounds: requested " << index
+                       << ", but valid index range is [0, " << subgraph.operands.size() << ")";
+            return false;
+        }
         if (subgraph.operands[index].lifetime != OperandLifeTime::SUBGRAPH_OUTPUT) {
             LOG(ERROR) << "Output with index" << index << " has invalid lifetime";
             return false;
